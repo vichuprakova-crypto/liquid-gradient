@@ -66,10 +66,22 @@ void mainImage(out vec4 fragColor,in vec2 fragCoord){
 
 void main(){
     vec4 col;mainImage(col,gl_FragCoord.xy);
-    col.rgb=hueShiftRGB(col.rgb,uHueShift);
+
+    vec3 bgColor = vec3(0.286, 0.412, 0.514);   // #496983
+    vec3 waveColor = vec3(0.094, 0.216, 0.322); // #183752
+
+    col.rgb = hueShiftRGB(col.rgb, uHueShift);
+
+    float lum = dot(col.rgb, vec3(0.299, 0.587, 0.114));
+    float wave = smoothstep(0.015, 0.22, lum);
+    wave = pow(wave, 0.55);
+
+    col.rgb = mix(bgColor, waveColor, wave);
+
     float scanline_val=sin(gl_FragCoord.y*uScanFreq)*0.5+0.5;
     col.rgb*=1.-(scanline_val*scanline_val)*uScan;
     col.rgb+=(rand(gl_FragCoord.xy+uTime)-0.5)*uNoise;
+
     gl_FragColor=vec4(clamp(col.rgb,0.0,1.0),1.0);
 }
 `;function lr(t){let e=t.querySelector("canvas");e||(e=document.createElement("canvas"),e.className="liquid-gradient",t.appendChild(e));let r=parseFloat(t.getAttribute("data-hue")||"0"),i=parseFloat(t.getAttribute("data-noise")||"0"),s=parseFloat(t.getAttribute("data-scanline")||"0"),n=parseFloat(t.getAttribute("data-speed")||"0.5"),h=parseFloat(t.getAttribute("data-scan-freq")||"0"),l=parseFloat(t.getAttribute("data-warp")||"0"),a=parseFloat(t.getAttribute("data-resolution-scale")||"1"),c=new I({dpr:Math.min(window.devicePixelRatio,2),canvas:e}),f=c.gl,d=new B(f),o=new q(f,{vertex:nr,fragment:hr,uniforms:{uTime:{value:0},uResolution:{value:new D},uHueShift:{value:r},uNoise:{value:i},uScan:{value:s},uScanFreq:{value:h},uWarp:{value:l}}}),u=new N(f,{geometry:d,program:o}),p=()=>{let v=t,y=v.clientWidth,F=v.clientHeight;c.setSize(y*a,F*a),o.uniforms.uResolution.value.set(y,F)};window.addEventListener("resize",p),p();let g=performance.now(),x=0,m=!1,_=()=>{m||(o.uniforms.uTime.value=(performance.now()-g)/1e3*n,o.uniforms.uHueShift.value=r,o.uniforms.uNoise.value=i,o.uniforms.uScan.value=s,o.uniforms.uScanFreq.value=h,o.uniforms.uWarp.value=l,c.render({scene:u}),x=requestAnimationFrame(_))};return _(),()=>{m=!0,cancelAnimationFrame(x),window.removeEventListener("resize",p)}}function ar(){Array.from(document.querySelectorAll(".liquid-gradient")).filter(e=>e.tagName.toLowerCase()!=="canvas").forEach(e=>{lr(e)})}window.boot=ar;
